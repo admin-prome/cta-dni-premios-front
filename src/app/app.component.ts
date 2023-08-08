@@ -2,12 +2,14 @@ import { Component, OnInit } from '@angular/core';
 import { Client } from './models/client.model';
 import { ClientService } from './services/client.service';
 import { MailService } from './services/mail.service';
-import { patchDTO } from './models/patchdto.model';
+import { patchDTO } from './models/patchDto.model';
 import { RecordPatch } from './models/recordPatch.model';
+import { RecordRejected } from './models/recordRejected.model';
 import { saveAs } from 'file-saver';
 import * as XLSX from 'xlsx';
 import { AlertService } from './services/alert.service';
 import { BlobService } from './services/blob.service';
+import { RecordAwarded } from './models/recordAwarded.model';
 
 
 @Component({
@@ -17,10 +19,14 @@ import { BlobService } from './services/blob.service';
 })
 export class AppComponent implements OnInit {
 
-  title = 'Cuenta dni Premios';
+  title = 'Cuenta DNI Premios';
 
   clients: Client[] = [];
+
   recordsToBePatched: RecordPatch[] = [];
+  recordsToBeRejected: RecordRejected[] = [];
+  recordsToBeAwarded: RecordAwarded[] = [];
+
   segmentAnalysisCompleted: boolean = false;
 
   //Filters 
@@ -34,9 +40,10 @@ export class AppComponent implements OnInit {
   selectedClient: Client | null = null;
   showModal: boolean = false;
   modalType!: string;
-  observation: string = '';
+  segmentObservation: string = '';
+  financeObservation: string = '';
   imageModal: string = '';
-  paymentObservation = '';
+  transferAmount = '0';
 
   //CharactersAllowed
   maxCharacterCount: number = 1000;
@@ -44,12 +51,12 @@ export class AppComponent implements OnInit {
 
   //Save
   isSaving: boolean = false;
-  buttonText: string = 'Guardar y enviar cambios';
+  buttonText: string = 'Guardar y enviar';
 
 
-  constructor(public clientService: ClientService, public mailService: MailService, public alertService: AlertService,public blobService:BlobService) {
+  constructor(public clientService: ClientService, public mailService: MailService, public alertService: AlertService, public blobService: BlobService) {
 
-    this.selectedClient = new Client(0, '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', 'Pendiente', '', '', '', '', '', '');
+    this.selectedClient = new Client(0, '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', 'Pendiente', '', '', '', '5000', '', '', '', '');
     this.filteredClients = this.clients;
   }
 
@@ -84,49 +91,62 @@ export class AppComponent implements OnInit {
 
 
   handleAnalysis(client: Client, type: string) {
-   
-    console.log(type)
-     
-      let fullName=client.firstName + ' ' +client.lastName
+
+    switch (type) {
+      case "segmentAnalysisApproved":
+        client.segmentAnalysis = 'Aprobado';
+        const patchDTORecordSegmentAnalysisApproved = new patchDTO('/SegmentAnalysis', client.segmentAnalysis)
+        const recordToBePatchedSegmentAnalysisApproved = new RecordPatch(client.dni, client.cuit, [patchDTORecordSegmentAnalysisApproved], client.firstName + ' ' + client.lastName, client.email)
+        this.recordsToBePatched.push(recordToBePatchedSegmentAnalysisApproved);
+        this.segmentAnalysisCompleted = true;
+        break;
+
+      case "financeAnalysisApproved":
+        client.financeAnalysis = 'Aprobado';
+        this.closeModal();
+        const patchDTORecordFinanceAnalysisApproved = new patchDTO('/FinanceAnalysis', client.financeAnalysis);
+        const patchDTORecordPaymentMade = new patchDTO('/paymentMade', 'Si');
+        const recordToBePatchedFinanceAnalysisApproved = new RecordPatch(client.dni, client.cuit, [patchDTORecordFinanceAnalysisApproved, patchDTORecordPaymentMade], client.firstName + ' ' + client.lastName, client.email);
+        this.recordsToBePatched.push(recordToBePatchedFinanceAnalysisApproved);
+
+        const recordToBeAwarded = new RecordAwarded(client.dni, client.cuit, client.firstName + ' ' + client.lastName, client.email)
+        this.recordsToBeAwarded.push(recordToBeAwarded);
+        break;
+    }
+  }
+
+  observeClient(selectedClient: Client | null, type: string) {
+
+    if (selectedClient) {
+
       switch (type) {
-        case "segmentAnalysisApproved":
-          console.log('segmentAnalysisApproved')
-          client.segmentAnalysis = 'Aprobado';
-          const patchDTORecord = new patchDTO('/SegmentAnalysis', client.segmentAnalysis)
-          
-          const recordToBePatched = new RecordPatch(client.dni, client.cuit, [patchDTORecord],fullName,client.email)
-          this.recordsToBePatched.push(recordToBePatched);
-          this.segmentAnalysisCompleted = true;
+        case "RejectSegment":
+          selectedClient.segmentAnalysis = 'Rechazado';
+          const recordToBeRejected = new RecordRejected(selectedClient.dni, selectedClient.cuit, selectedClient.firstName + ' ' + selectedClient.lastName, selectedClient.email, selectedClient.segmentObservation);
+          this.recordsToBeRejected.push(recordToBeRejected);
           break;
-  
-        case "segmentAnalysisRejected":
-          client.segmentAnalysis = 'Rechazado';
-          const patchDTORecordSegmentReject = new patchDTO('/SegmentAnalysis', client.segmentAnalysis)
-          
-          const recordToBePatchedSegmentReject = new RecordPatch(client.dni, client.cuit, [patchDTORecordSegmentReject],client.fullName,client.email);
-          this.recordsToBePatched.push(recordToBePatchedSegmentReject);
-          break;
-  
-        case "financeAnalysisApproved":
-          client.financeAnalysis = 'Aprobado';
-          client.paymentObservation = this.paymentObservation;
-          console.log(client);
-          this.closeModal();
-          const patchDTOFinanceRecordApproved = new patchDTO('/FinanceAnalysis', client.financeAnalysis)
-          const recordToBePatchedFinanceApproved = new RecordPatch(client.dni, client.cuit, [patchDTOFinanceRecordApproved],client.fullName,client.email);
-          this.recordsToBePatched.push(recordToBePatchedFinanceApproved);
-          //Envio de mail de pago
-          break;
-  
-        case "financeAnalysisRejected":
-          client.financeAnalysis = 'Rechazado';
-          const patchDTOFinanceRecordRejected = new patchDTO('/FinanceAnalysis', client.financeAnalysis)
-          const recordToBePatchedFinanceRejected = new RecordPatch(client.dni, client.cuit, [patchDTOFinanceRecordRejected],client.fullName,client.email);
-          this.recordsToBePatched.push(recordToBePatchedFinanceRejected);
+        case "RejectFinance":
+          const patchDTORecordFinanceObservationRejected = new patchDTO('/Observation', selectedClient.segmentObservation);
+          // const patchDTOObservationSegmento = new patchDTO('/SegmentAnalysis', 'Observado');
+          // const recordToBePatchedFinanceObservationRejected  = new RecordPatch(selectedClient.dni, selectedClient.cuit, [patchDTORecordFinanceObservationRejected, patchDTOObservationSegmento], selectedClient.fullName, selectedClient.email);
+          const recordToBePatchedFinanceObservationRejected = new RecordPatch(selectedClient.dni, selectedClient.cuit, [patchDTORecordFinanceObservationRejected], selectedClient.firstName + ' ' + selectedClient.lastName, selectedClient.email);
+          this.recordsToBePatched.push(recordToBePatchedFinanceObservationRejected);
           break;
       }
-    
-   
+
+      this.filterClientsBySegmentAnalysis();
+    }
+    this.closeModal();
+  }
+
+  setTransferAmount(selectedClient: Client | null, value: string) {
+    if (selectedClient) {
+      selectedClient.transferAmount = value;
+      const patchDTORecordTransferAmount = new patchDTO('/transferAmount', selectedClient.transferAmount)
+        const recordToBePatchedTransferAmount = new RecordPatch(selectedClient.dni, selectedClient.cuit, [patchDTORecordTransferAmount], selectedClient.firstName + ' ' + selectedClient.lastName, selectedClient.email)
+        this.recordsToBePatched.push(recordToBePatchedTransferAmount);
+    }
+    this.closeModal();
   }
 
   updateAnalysis(client: Client, segmentAnalysisNumber: number, json: string) {
@@ -166,29 +186,10 @@ export class AppComponent implements OnInit {
     }
   }
 
-  observeClient(selectedClient: Client | null) {
-    console.log('observeClient')
-    if (selectedClient) {
-      console.log('entró al true')
-      selectedClient.segmentAnalysis = 'Observado';
-      selectedClient.observation = this.observation;
-
-      const patchDTOObservation = new patchDTO('/Observation', selectedClient.observation);
-      const patchDTOObservationSegmento = new patchDTO('/SegmentAnalysis', 'Observado');
-      const recordToBePatchedObservation = new RecordPatch(selectedClient.dni, selectedClient.cuit, [patchDTOObservation,patchDTOObservationSegmento],selectedClient.fullName,selectedClient.email);
-      this.recordsToBePatched.push(recordToBePatchedObservation);
-      this.filterClientsBySegmentAnalysis();
-    }
-    this.closeModal();
-  }
 
 
   //Filters
   filterClientsBySegmentAnalysis() {
-    this.updateClients();
-  }
-
-  updateClients() {
     if (this.selectedSegmentAnalysis) {
       this.filteredClients = this.clients.filter(client => client.segmentAnalysis === this.selectedSegmentAnalysis);
     } else {
@@ -196,22 +197,23 @@ export class AppComponent implements OnInit {
     }
   }
 
-
   //Modals
   openModal(type: string, client?: Client, imageUrl?: string): void {
     this.selectedClient = client || null;
+    console.log(this.selectedClient);
     this.imageModal = imageUrl ? imageUrl : '';
     this.showModal = true;
     this.modalType = type;
 
-    if (type === "Observation") {
-      this.observation = client?.observation || '';
-      this.updateCharacterCount(this.observation);
-    }
-
-    if (type === "PaymentConfirmation") {
-      this.paymentObservation = client?.paymentObservation || '';
-      this.updateCharacterCount(this.paymentObservation);
+    switch (type) {
+      case "RejectSegment":
+        this.segmentObservation = client?.segmentObservation || '';
+        this.updateCharacterCount(this.segmentObservation);
+        break;
+      case "RejectFinance":
+        this.financeObservation = client?.financeObservation || '';
+        this.updateCharacterCount(this.financeObservation);
+        break;
     }
   }
 
@@ -224,50 +226,45 @@ export class AppComponent implements OnInit {
   }
 
   onFileSelected(event: any, client: Client): void {
-    console.log('onFileSelected')
     const file = event.target.files[0];
     const fileName = file.name;
     const fileExtension = fileName.split('.').pop();
     const newFileName = `comprobante_pago_${client.lastName}_${client.dni}.${fileExtension}`;
     const renamedFile = new File([file], newFileName, { type: file.type });
     const reader = new FileReader();
-    this.managePaymentReceiptImage(renamedFile,client);
+
 
     reader.onloadend = () => {
       client.paymentReceiptImage = newFileName;
-      
     };
 
-    
     if (renamedFile) {
       reader.readAsDataURL(renamedFile);
     }
 
-
+    this.managePaymentReceiptImage(renamedFile, client);
   }
 
+  managePaymentReceiptImage(file: File, client: Client) {
 
-
-  managePaymentReceiptImage(file: File,client:Client) {
-  
     const formData: FormData = new FormData();
     formData.append('file', file, file.name);
 
     this.blobService.postFile(formData)
       .subscribe(
         (response) => {
-          
-         let url=response.result
-         const patchDTOImageReceipt = new patchDTO('/paymentReceiptImage', url);
-         const patchDTOFinanceAnalysis = new patchDTO('/financeAnalysis', 'Aprobado');
-         const patchDTOPaymentMade = new patchDTO('/paymentMade', 'Si');
-         const recordToAddImageReceipt = new RecordPatch(client.dni, client.cuit, [patchDTOImageReceipt,patchDTOFinanceAnalysis,patchDTOPaymentMade],client.fullName,client.email);
-         this.recordsToBePatched.push(recordToAddImageReceipt);
-         this.alertService.alert("info","Imagen correctamente cargada");
+
+          let url = response.result
+          const patchDTOImageReceipt = new patchDTO('/paymentReceiptImage', url);
+          const patchDTOFinanceAnalysis = new patchDTO('/financeAnalysis', 'Aprobado');
+          const patchDTOPaymentMade = new patchDTO('/paymentMade', 'Si');
+          const recordToAddImageReceipt = new RecordPatch(client.dni, client.cuit, [patchDTOImageReceipt, patchDTOFinanceAnalysis, patchDTOPaymentMade], client.firstName + ' ' + client.lastName, client.email);
+          this.recordsToBePatched.push(recordToAddImageReceipt);
+          this.alertService.alert("success", "Imagen correctamente cargada");
         },
         (error) => {
           console.error('Error uploading file:', error);
-          this.alertService.alert("error", "Ocurrió un problema al guardar los cambios. Por favor, intentá nuevamente más tarde");
+          this.alertService.alert("error", "Ocurrió un problema al guardar la imagen. Por favor, intentá nuevamente más tarde");
         }
       );
   }
@@ -279,39 +276,41 @@ export class AppComponent implements OnInit {
 
     try {
       this.manageChanges()
-      
+
     } catch (error) {
       console.error("Error en saveChanges:", error);
       this.alertService.alert("error", "Ocurrió un problema al guardar los cambios. Por favor, intentá nuevamente más tarde");
     }
   }
 
-  async manageChanges()
-  {
+  async manageChanges() {
 
     await this.clientService.patchRecords(this.recordsToBePatched);
+    await this.clientService.rejectRecords(this.recordsToBeRejected);
 
-    await this.mailService.sendMails(this.recordsToBePatched);
-   
+    await this.mailService.sendMailsPatch(this.recordsToBePatched);
+    await this.mailService.sendMailsReject(this.recordsToBeRejected);
+    await this.mailService.sendMailsAwarded(this.recordsToBeAwarded);
+
     this.isSaving = true;
     this.buttonText = 'Guardando...';
     this.recordsToBePatched = [];
     setTimeout(() => {
       this.isSaving = false;
-      this.buttonText = 'Guardar cambios';
+      this.buttonText = 'Guardar y enviar';
       this.loadData();
     }, 3000);
   }
 
   loadData() {
-    console.log("Entra al LoadData")
     try {
       this.spinner = true;
       this.clientService.getClients().subscribe(
         (response) => {
-          this.clients = response.result
+          this.clients = response.result;
           this.filteredClients = this.clients;
           this.spinner = false;
+          console.log(response.result);
         },
         (error) => {
           console.error("Error en loadData:", error);
@@ -340,12 +339,12 @@ export class AppComponent implements OnInit {
       ['Nombre', 'Apellido', 'DNI', 'Correo electrónico', 'Tipo de teléfono', 'Código de área',
         'Número de teléfono', 'Período de la promoción', 'Fecha de liquidación préstamo',
         'Monto de ventas por Cuenta DNI Comercios', 'CUIT', 'Link del adjunto', 'CBU',
-        'Crédito BIP', 'Análisis de segmento', 'Observación', '¿Pago realizado?', 'Importe a transferir'],
+        'Crédito BIP', 'Análisis de Segmentos', 'Observación de Segmentos', 'Análisis de Finanzas', 'Observación de Finanzas', '¿Pago realizado?', 'Importe a transferir'],
 
       ...this.clients.map(client => [client.firstName, client.lastName, client.dni, client.email,
       client.phoneType, client.areaCode, client.phoneNumber, client.salesPeriod, client.loanSettlementDate,
       client.salesAmountCtaDNICom, client.cuit, client.attachmentLink, client.CBU, client.BIPCredit,
-      client.segmentAnalysis, client.observation, client.paymentMade, client.transferAmount]),
+      client.segmentAnalysis, client.segmentObservation, client.financeAnalysis, client.financeObservation, client.paymentMade, client.transferAmount]),
     ];
 
     const workbook = XLSX.utils.book_new();

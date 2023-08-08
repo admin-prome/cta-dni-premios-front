@@ -1,3 +1,4 @@
+import { CurrencyPipe } from '@angular/common';
 import { Pipe, PipeTransform, Injectable } from '@angular/core';
 
 @Pipe({
@@ -5,16 +6,14 @@ import { Pipe, PipeTransform, Injectable } from '@angular/core';
 })
 @Injectable()
 export class CurrencyFormatPipe implements PipeTransform {
-    transform(value: number): string {
-
-        if (isNaN(value) || value === null) {
+    transform(value: string | undefined): string {
+        if (!value) {
             return '';
         }
 
-        const parts = value.toFixed(2).split('.');
-        const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-        const decimalPart = parts[1];
+        const numberValue = parseFloat(value.replace(/,/g, ''));
+        const formattedValue = numberValue.toLocaleString('en-US', { minimumFractionDigits: 2 });
 
-        return `$${integerPart},${decimalPart}`;
+        return `$${formattedValue}`;
     }
 }

@@ -20,5 +20,4 @@ export class BlobService {
     return this.httpClient.get(environment.blob+"/imageName");
   }
    */
-
 }

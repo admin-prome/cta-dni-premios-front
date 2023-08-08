@@ -97,36 +97,6 @@ h1 {
     }
 }
 
-/* .spinner {
-    position: relative;
-    width: 80px;
-    height: 80px;
-    border-radius: 10rem;
-    background: linear-gradient(#279D2E, #25B4BD);
-    animation: animate 1s linear infinite;
-}
-
-.spinner::before {
-    position: absolute;
-    content: "";
-    background: #fff;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    width: 80%;
-    height: 80%;
-    border-radius: 10rem;
-}
-
-@keyframes animate {
-    from {
-        transform: rotate(0deg);
-    }
-
-    to {
-        transform: rotate(360deg);
-    }
-} */
 
 .table-container {
     display: flex;
@@ -174,16 +144,16 @@ h1 {
     width: 5.5rem;
 }
 
+.small-font {
+    font-size: 14px;
+  }
+
 .light-red {
     background-color: #F9DCDF !important;
 }
 
 .light-green {
     background-color: #DDF9EC !important;
-}
-
-.light-yellow {
-    background-color: #FFF5D6 !important;
 }
 
 .btn-prome-blue {

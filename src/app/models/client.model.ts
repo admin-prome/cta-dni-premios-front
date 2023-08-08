@@ -5,7 +5,6 @@ export class Client {
     trackingNumber: string;
     firstName: string;
     lastName: string;
-    fullName:string;
     dni: string;
     email: string;
     emailConfirmation: string;
@@ -21,11 +20,15 @@ export class Client {
     BIPCredit: string;
     segmentAnalysis: string;
     financeAnalysis: string;
-    observation: string;
+    segmentObservation: string;
+    financeObservation: string;
     paymentMade: string;
     transferAmount: string;
     paymentReceiptImage: string;
     paymentObservation: string;
+    comercialExecutive: string;
+    comercialExecutiveBranch: string;
+
 
     constructor(
         id: number,
@@ -47,17 +50,20 @@ export class Client {
         BIPCredit: string,
         segmentAnalysis: string,
         financeAnalysis: string,
-        observation: string,
+        segmentObservation: string,
+        financeObservation: string,
         paymentMade: string,
         transferAmount: string,
         paymentReceiptImage: string,
-        paymentObservation: string) {
+        paymentObservation: string,
+        comercialExecutive: string,
+        comercialExecutiveBranch: string
+    ) {
 
         this.id = id;
         this.trackingNumber = trackingNumber;
         this.firstName = firstName;
         this.lastName = lastName;
-        this.fullName=firstName +' '+lastName;
         this.dni = dni;
         this.email = email;
         this.emailConfirmation = emailConfirmation;
@@ -73,15 +79,17 @@ export class Client {
         this.BIPCredit = BIPCredit;
         this.segmentAnalysis = segmentAnalysis;
         this.financeAnalysis = financeAnalysis;
-        this.observation = observation;
+        this.segmentObservation = segmentObservation;
+        this.financeObservation = financeObservation;
         this.paymentMade = paymentMade;
-        this.transferAmount = transferAmount;
+        this.transferAmount = '0';
         this.paymentReceiptImage = paymentReceiptImage;
         this.paymentObservation = paymentObservation;
+        this.comercialExecutive = comercialExecutive;
+        this.comercialExecutiveBranch = comercialExecutiveBranch;
     }
 
-    getFullName()
-    {
+    getFullName() {
         return this.firstName + ' ' + this.lastName;
     }
 }
