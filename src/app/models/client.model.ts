@@ -16,7 +16,7 @@ export class Client {
     salesAmountCtaDNICom: string;
     cuit: string;
     attachmentLink: string;
-    CBU: string;
+    cbu: string;
     BIPCredit: string;
     segmentAnalysis: string;
     financeAnalysis: string;
@@ -46,7 +46,7 @@ export class Client {
         salesAmountCtaDNICom: string,
         cuit: string,
         attachmentLink: string,
-        CBU: string,
+        cbu: string,
         BIPCredit: string,
         segmentAnalysis: string,
         financeAnalysis: string,
@@ -75,7 +75,7 @@ export class Client {
         this.salesAmountCtaDNICom = salesAmountCtaDNICom;
         this.cuit = cuit;
         this.attachmentLink = attachmentLink;
-        this.CBU = CBU;
+        this.cbu = cbu;
         this.BIPCredit = BIPCredit;
         this.segmentAnalysis = segmentAnalysis;
         this.financeAnalysis = financeAnalysis;

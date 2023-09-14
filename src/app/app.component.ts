@@ -343,7 +343,7 @@ export class AppComponent implements OnInit {
 
       ...this.clients.map(client => [client.firstName, client.lastName, client.dni, client.email,
       client.phoneType, client.areaCode, client.phoneNumber, client.salesPeriod, client.loanSettlementDate,
-      client.salesAmountCtaDNICom, client.cuit, client.attachmentLink, client.CBU, client.BIPCredit,
+      client.salesAmountCtaDNICom, client.cuit, client.attachmentLink, client.cbu, client.BIPCredit,
       client.segmentAnalysis, client.segmentObservation, client.financeAnalysis, client.financeObservation, client.paymentMade, client.transferAmount]),
     ];
 

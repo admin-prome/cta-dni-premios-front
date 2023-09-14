@@ -91,7 +91,7 @@
         <td [ngClass]="{
           'light-red': client.segmentAnalysis === 'Rechazado',
           'light-green': client.segmentAnalysis === 'Aprobado'
-        }" class="small-width-column small-font">{{ client.CBU }}</td>
+        }" class="small-width-column small-font">{{ client.cbu }}</td>
         <td [ngClass]="{
           'light-red': client.segmentAnalysis === 'Rechazado',
           'light-green': client.segmentAnalysis === 'Aprobado'
@@ -193,7 +193,7 @@
                 </tr>
                 <tr>
                   <td>CBU</td>
-                  <td>{{ selectedClient?.CBU }}</td>
+                  <td>{{ selectedClient?.cbu }}</td>
                 </tr>
                 <tr>
                   <td>Crédito BIP</td>
@@ -273,7 +273,7 @@
                 </tr>
                 <tr>
                   <td>CBU</td>
-                  <td>{{ selectedClient?.CBU }}</td>
+                  <td>{{ selectedClient?.cbu }}</td>
                 </tr>
                 <tr>
                   <td>¿Pago realizado?</td>
